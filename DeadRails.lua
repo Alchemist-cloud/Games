@@ -1,231 +1,253 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-
-local Window = Fluent:CreateWindow({
-    Title = "Mistify" .. Fluent.Version,
-    SubTitle = "by alchemist",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = true,
-    Theme = "Darker",
-    MinimizeKey = Enum.KeyCode.LeftControl
-})
-
-
-Fluent:Notify({
-    Title = "thanks for using the script",
-    Content = "made by alchemist",
-    Duration = 5
-})
-
-
-local Tabs = {
-    Misc = Window:AddTab({ Title = "Misc", Icon = "grid" }),
-    Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
-    Info = Window:AddTab({ Title = "Info", Icon = "info" })
-}
-Tabs.Misc:AddButton({
-    Title = "Tp to stillwater",
-    Description = "Teleport to Stillwater",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Alchemist-cloud/newstillwater/refs/heads/main/alchemist.lua", true))()
-    end
-})
-
-
-Tabs.Misc:AddButton({
-    Title = "Tp to castle",
-    Description = "Teleport to Castle",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/castletpfast.github.io/refs/heads/main/FASTCASTLE.lua", true))()
-    end
-})
-
-
-Tabs.Misc:AddButton({
-    Title = "Tp to sterling",
-    Description = "Teleport to Sterling",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/Tptostearling.github.io/refs/heads/main/Stearlingtown.lua", true))()
-    end
-})
-
-
-Tabs.Misc:AddButton({
-    Title = "Tp to Fort",
-    Description = "Teleport to Fort",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/Tpfort.github.io/refs/heads/main/Tpfort.lua", true))()
-    end
-})
-
-
-Tabs.Misc:AddButton({
-    Title = "Tp to Tesla lab",
-    Description = "Teleport to Tesla lab",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/tptotesla.github.io/refs/heads/main/Tptotesla.lua", true))()
-    end
-})
-local espConnection
-local highlighted = {}
-
-
-Tabs.Visuals:AddToggle("EspMobs", {
-    Title = "Esp Mobs",
-    Description = "ESP MOBS",
-    Default = false,
-    Callback = function(state)
-        if state then
-            local player = game.Players.LocalPlayer
-            local character = player.Character or player.CharacterAdded:Wait()
-            local HRP = character:WaitForChild("HumanoidRootPart")
-            local radius = 50
-
-
-            espConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                for _, model in pairs(workspace:GetChildren()) do
-                    if model:IsA("Model") and model:FindFirstChild("Humanoid") and model:FindFirstChild("HumanoidRootPart") and model ~= character then
-                        local hrp = model.HumanoidRootPart
-                        local dist = (HRP.Position - hrp.Position).Magnitude
-                        local isPlayer = game.Players:GetPlayerFromCharacter(model)
-                        local alreadyHas = highlighted[model]
-
-
-                        if dist < radius and hrp.AssemblyLinearVelocity.Magnitude > 0.1 and not isPlayer then
-                            if not alreadyHas then
-                                local highlight = Instance.new("Highlight")
-                                highlight.FillColor = Color3.new(1, 0, 0)
-                                highlight.OutlineTransparency = 1
-                                highlight.FillTransparency = 0.3
-                                highlight.Adornee = model
-                                highlight.Parent = model
-                                highlighted[model] = highlight
-                            end
-                        else
-                            if alreadyHas then
-                                alreadyHas:Destroy()
-                                highlighted[model] = nil
-                            end
-                        end
-                    end
-                end
-            end)
-        else
-            if espConnection then
-                espConnection:Disconnect()
-                espConnection = nil
-            end
-            for model, highlight in pairs(highlighted) do
-                if highlight then
-                    highlight:Destroy()
-                end
-            end
-            table.clear(highlighted)
-        end
-    end
-})
-
-Tabs.Visuals:AddToggle("FullbrightToggle", {
-    Title = "Fullbright",
-    Description = "Fullbright",
-    Default = false,
-    Callback = function(state)
-        local lighting = game:GetService("Lighting")
-
-
-        if state then
-            lighting.FogEnd = 1e10
-            lighting.Brightness = 5
-            lighting.GlobalShadows = false
-            lighting.OutdoorAmbient = Color3.new(1, 1, 1)
-        else
-            lighting.FogEnd = 1000
-            lighting.Brightness = 2
-            lighting.GlobalShadows = true
-            lighting.OutdoorAmbient = Color3.new(0.5, 0.5, 0.5)
-        end
-    end
-})
-
-local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
-local camera = workspace.CurrentCamera
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local Mouse = Player:GetMouse()
+local Camera = workspace.CurrentCamera
+
+local ScreenGui = Instance.new("ScreenGui", Player:WaitForChild("PlayerGui"))
+ScreenGui.Name = "AlchemistUI"
+ScreenGui.ResetOnSpawn = false
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 600, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+MainFrame.BackgroundTransparency = 0.25
+MainFrame.BorderSizePixel = 0
+local dragging, dragInput, dragStart, startPos
+MainFrame.InputBegan:Connect(function(input)
+ if input.UserInputType == Enum.UserInputType.MouseButton1 then
+  dragging = true
+  dragStart = input.Position
+  startPos = MainFrame.Position
+  input.Changed:Connect(function()
+   if input.UserInputState == Enum.UserInputState.End then
+    dragging = false
+   end
+  end)
+ end
+end)
 
 
-local aimbotConnection
-local currentTarget = nil
+MainFrame.InputChanged:Connect(function(input)
+ if input.UserInputType == Enum.UserInputType.MouseMovement then
+  dragInput = input
+ end
+end)
 
 
-local function getClosestTarget()
-    local closestNPC = nil
-    local shortestDistance = math.huge
+RunService.InputChanged:Connect(function(input)
+ if input == dragInput and dragging then
+  local delta = input.Position - dragStart
+  MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+ end
+end)
 
 
-    for _, npc in pairs(workspace:GetDescendants()) do
-        if npc:IsA("Model") and not Players:GetPlayerFromCharacter(npc) and npc ~= player.Character then
-            local humanoid = npc:FindFirstChildOfClass("Humanoid")
-            local hrp = npc:FindFirstChild("HumanoidRootPart")
+local Tabs = {}
+local tabNames = {"Info", "Misc", "Visual"}
+local currentTab = nil
 
 
-            if humanoid and hrp and humanoid.Health > 0 then
-                local npcVelocity = hrp.AssemblyLinearVelocity
-                local directionToPlayer = (player.Character.HumanoidRootPart.Position - hrp.Position).Unit
-                local movingTowardPlayer = npcVelocity:Dot(directionToPlayer) > 0.5
+local TabBar = Instance.new("Frame", MainFrame)
+TabBar.Size = UDim2.new(1, 0, 0, 35)
+TabBar.BackgroundTransparency = 1
 
 
-                if movingTowardPlayer then
-                    local distance = (hrp.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                    if distance < shortestDistance then
-                        shortestDistance = distance
-                        closestNPC = npc
-                    end
-                end
-            end
-        end
-    end
+for i, name in ipairs(tabNames) do
+ local tabButton = Instance.new("TextButton", TabBar)
+ tabButton.Size = UDim2.new(0, 100, 0, 30)
+ tabButton.Position = UDim2.new(0, (i - 1) * 105 + 10, 0, 2)
+ tabButton.Text = name
+ tabButton.Font = Enum.Font.GothamSemibold
+ tabButton.TextColor3 = Color3.new(1, 1, 1)
+ tabButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+ tabButton.BackgroundTransparency = 0.3
+ tabButton.BorderSizePixel = 0
 
 
-    return closestNPC
+ local contentFrame = Instance.new("Frame", MainFrame)
+ contentFrame.Size = UDim2.new(1, -20, 1, -45)
+ contentFrame.Position = UDim2.new(0, 10, 0, 40)
+ contentFrame.Visible = false
+ contentFrame.BackgroundTransparency = 1
+
+
+ Tabs[name] = contentFrame
+
+
+ tabButton.MouseButton1Click:Connect(function()
+  if currentTab then
+   Tabs[currentTab].Visible = false
+  end
+  currentTab = name
+  contentFrame.Visible = true
+ end)
+
+
+ if i == 1 then
+  currentTab = name
+  contentFrame.Visible = true
+ end
 end
 
 
-Tabs.Misc:AddToggle("AimbotToggle", {
-    Title = "Aimbot",
-    Description = "Aimbot can't u read heh",
-    Default = false,
-    Callback = function(state)
-        if state then
-            aimbotConnection = RunService.RenderStepped:Connect(function()
-                if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+local Misc = Tabs["Misc"]
 
 
-                if currentTarget then
-                    local humanoid = currentTarget:FindFirstChildOfClass("Humanoid")
-                    if not humanoid or humanoid.Health <= 0 then
-                        currentTarget = nil
-                    end
-                end
+local function addButton(tab, text, callback)
+ local btn = Instance.new("TextButton", tab)
+ btn.Size = UDim2.new(0, 200, 0, 30)
+ btn.Position = UDim2.new(0, 10, 0, #tab:GetChildren() * 35)
+ btn.Text = text
+ btn.Font = Enum.Font.Gotham
+ btn.TextColor3 = Color3.new(1,1,1)
+ btn.BackgroundColor3 = Color3.fromRGB(150,0,0)
+ btn.BackgroundTransparency = 0.3
+ btn.BorderSizePixel = 0
+ btn.MouseButton1Click:Connect(callback)
+end
 
 
-                if not currentTarget then
-                    currentTarget = getClosestTarget()
-                end
+addButton(Misc, "Tp to Stillwater", function()
+ loadstring(game:HttpGet("https://raw.githubusercontent.com/Alchemist-cloud/newstillwater/refs/heads/main/alchemist.lua", true))()
+end)
 
 
-                if currentTarget then
-                    local targetPart = currentTarget:FindFirstChild("Head") or currentTarget:FindFirstChild("HumanoidRootPart")
-                    if targetPart then
-                        camera.CFrame = CFrame.new(camera.CFrame.Position, targetPart.Position)
-                    end
-                end
-            end)
-        else
-            if aimbotConnection then
-                aimbotConnection:Disconnect()
-                aimbotConnection = nil
-                currentTarget = nil
-            end
-        end
+addButton(Misc, "Tp to Castle", function()
+ loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/castletpfast.github.io/refs/heads/main/FASTCASTLE.lua", true))()
+end)
+
+
+addButton(Misc, "Tp to Sterling", function()
+ loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/Tptostearling.github.io/refs/heads/main/Stearlingtown.lua", true))()
+end)
+
+
+addButton(Misc, "Tp to Fort", function()
+ loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/Tpfort.github.io/refs/heads/main/Tpfort.lua", true))()
+end)
+
+
+addButton(Misc, "Tp to Tesla Lab", function()
+ loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/tptotesla.github.io/refs/heads/main/Tptotesla.lua", true))()
+end)
+
+
+local aimbotOn = false
+local aimbotConnection
+local currentTarget
+
+
+local function getClosestTarget()
+ local shortest = math.huge
+ local target = nil
+ for _, npc in pairs(workspace:GetDescendants()) do
+  if npc:IsA("Model") and not Players:GetPlayerFromCharacter(npc) and npc ~= Player.Character then
+   local humanoid = npc:FindFirstChildOfClass("Humanoid")
+   local hrp = npc:FindFirstChild("HumanoidRootPart")
+   if humanoid and hrp and humanoid.Health > 0 then
+    local dir = (Player.Character.HumanoidRootPart.Position - hrp.Position).Unit
+    if hrp.AssemblyLinearVelocity:Dot(dir) > 0.5 then
+     local dist = (hrp.Position - Player.Character.HumanoidRootPart.Position).Magnitude
+     if dist < shortest then
+      shortest = dist
+      target = npc
+     end
     end
-})
+   end
+  end
+ end
+ return target
+end
+
+
+addButton(Misc, "Toggle Aimbot", function()
+ aimbotOn = not aimbotOn
+ if aimbotOn then
+  aimbotConnection = RunService.RenderStepped:Connect(function()
+   if not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") then return end
+   if not currentTarget then currentTarget = getClosestTarget() end
+   if currentTarget then
+    local part = currentTarget:FindFirstChild("Head") or currentTarget:FindFirstChild("HumanoidRootPart")
+    if part then Camera.CFrame = CFrame.new(Camera.CFrame.Position, part.Position) end
+   end
+  end)
+ else
+  if aimbotConnection then aimbotConnection:Disconnect() end
+  currentTarget = nil
+ end
+end)
+
+
+local Visual = Tabs["Visual"]
+
+
+local mobESPOn = false
+local mobESPConnection
+local highlighted = {}
+
+
+addButton(Visual, "Toggle ESP Mobs", function()
+ mobESPOn = not mobESPOn
+ if mobESPOn then
+  local char = Player.Character or Player.CharacterAdded:Wait()
+  local HRP = char:WaitForChild("HumanoidRootPart")
+  local radius = 50
+
+
+  mobESPConnection = RunService.Heartbeat:Connect(function()
+   for _, model in pairs(workspace:GetChildren()) do
+    if model:IsA("Model") and model:FindFirstChild("Humanoid") and model:FindFirstChild("HumanoidRootPart") and model ~= char then
+     local hrp = model.HumanoidRootPart
+     local dist = (HRP.Position - hrp.Position).Magnitude
+     local isPlayer = Players:GetPlayerFromCharacter(model)
+     if dist < radius and hrp.AssemblyLinearVelocity.Magnitude > 0.1 and not isPlayer and not highlighted[model] then
+      local h = Instance.new("Highlight")
+      h.FillColor = Color3.new(1, 0, 0)
+      h.OutlineTransparency = 1
+      h.FillTransparency = 0.3
+      h.Adornee = model
+      h.Parent = model
+      highlighted[model] = h
+     elseif dist >= radius or isPlayer then
+      if highlighted[model] then highlighted[model]:Destroy() highlighted[model] = nil end
+     end
+    end
+   end
+  end)
+ else
+  if mobESPConnection then mobESPConnection:Disconnect() end
+  for model, h in pairs(highlighted) do if h then h:Destroy() end end
+  table.clear(highlighted)
+ end
+end)
+
+
+local fbOn = false
+local fbLoop
+
+
+addButton(Visual, "Toggle Fullbright", function()
+ fbOn = not fbOn
+ local lighting = game:GetService("Lighting")
+ if fbOn then
+  fbLoop = RunService.RenderStepped:Connect(function()
+   lighting.FogEnd = 1e10
+   lighting.Brightness = 5
+   lighting.GlobalShadows = false
+   lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+  end)
+ else
+  if fbLoop then fbLoop:Disconnect() end
+  lighting.FogEnd = 1000
+  lighting.Brightness = 2
+  lighting.GlobalShadows = true
+  lighting.OutdoorAmbient = Color3.new(0.5, 0.5, 0.5)
+ end
+end)
+
+
+addButton(Tabs["Info"], "Made by Alchemist", function()
+ setclipboard("Alchemist hates using custom uis")
+end)
