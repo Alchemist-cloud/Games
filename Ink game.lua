@@ -221,4 +221,4 @@ end)
 ThemeManager:SetLibrary(Library)
 SaveManager:SetLibrary(Library)
 ThemeManager:ApplyToTab(Tabs.Info)
-SaveManager:BuildConfigSection(Tabs.Info) what extra logics should I add bruuu
+SaveManager:BuildConfigSection(Tabs.Info)
